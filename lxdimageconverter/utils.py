@@ -8,7 +8,10 @@ from .conf import *
 
 def parse_fdisk(fdisk_output):
     result = {}
+    disk_type = "dos"
     for line in fdisk_output.split("\n"):
+        if "Disklabel type: gpt" in line:
+            disk_type = "gpt"
         if not line.startswith("/"):
             continue
         parts = line.split()
@@ -26,8 +29,12 @@ def parse_fdisk(fdisk_output):
         inf['end'] = int(parts[2])
         inf['blocks'] = int(parts[3].rstrip("+"))
         inf['size'] = parts[4]
-        inf['partition_id'] = int(parts[5], 16)
-        inf['partition_id_string'] = " ".join(parts[6:])
+        if disk_type == "dos":
+            inf['partition_id'] = int(parts[5], 16)
+            inf['partition_id_string'] = " ".join(parts[6:])
+        else:
+            inf['partition_id'] = -1
+            inf['partition_id_string'] = " ".join(parts[5:])
 
         result[parts[0]] = inf
     return result
